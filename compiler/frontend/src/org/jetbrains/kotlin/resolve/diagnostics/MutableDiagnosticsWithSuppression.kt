@@ -22,12 +22,14 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 
 class MutableDiagnosticsWithSuppression(
     private val suppressCache: KotlinSuppressCache,
     private val delegateDiagnostics: Diagnostics,
 ) : Diagnostics {
     private val diagnosticList = ArrayList<Diagnostic>()
+    private var diagnosticsCallback: DiagnosticSink.DiagnosticsCallback? = null
 
     //NOTE: CachedValuesManager is not used because it requires Project passed to this object
     private val cache = CachedValueImpl {
@@ -43,12 +45,25 @@ class MutableDiagnosticsWithSuppression(
     override fun forElement(psiElement: PsiElement) = readonlyView().forElement(psiElement)
     override fun noSuppression() = readonlyView().noSuppression()
 
+    override fun setCallback(callback: DiagnosticSink.DiagnosticsCallback?) {
+        diagnosticsCallback = callback
+        delegateDiagnostics.setCallback(callback)
+    }
+
     //essential that this list is readonly
     fun getOwnDiagnostics(): List<Diagnostic> {
         return diagnosticList
     }
 
     fun report(diagnostic: Diagnostic) {
+        // TODO: [VD] diagnostic has to be reported via callback, but there are several of failures
+        //  unable to render message for some diagnostics :
+        //  e.g.: `Type parameter descriptor is not initialized: T declared in fooParam` (see [PsiCheckerTestGenerated$Checker.testRedeclaration])
+
+//        if (this.suppressCache.filter.invoke(diagnostic)) {
+//             diagnosticsCallback?.callback(diagnostic)
+//        }
+
         diagnosticList.add(diagnostic)
         modificationTracker.incModificationCount()
     }
