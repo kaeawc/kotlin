@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.psi.KtFile
@@ -23,14 +22,8 @@ abstract class AbstractBindingContextAwareHighlightingPassBase(
 
     protected fun bindingContext(): BindingContext = bindingContext ?: error("bindingContext has to be acquired")
 
-    protected open fun buildBindingContext(holder: AnnotationHolder): BindingContext {
-        val analysisResult = file.analyzeWithAllCompilerChecks()
-        if (analysisResult.isError()) {
-            throw ProcessCanceledException(analysisResult.error)
-        }
-
-        return analysisResult.bindingContext
-    }
+    protected open fun buildBindingContext(holder: AnnotationHolder): BindingContext =
+        file.analyzeWithAllCompilerChecks().also { it.throwIfError() }.bindingContext
 
     override fun runAnnotatorWithContext(element: PsiElement, holder: AnnotationHolder) {
         bindingContext = buildBindingContext(holder)

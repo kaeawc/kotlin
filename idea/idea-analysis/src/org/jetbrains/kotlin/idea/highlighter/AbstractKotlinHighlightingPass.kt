@@ -12,7 +12,6 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.util.CommonProcessors
@@ -63,11 +62,7 @@ abstract class AbstractKotlinHighlightingPass(file: KtFile, document: Document) 
                                                   if (element in elements && it !in annotationBuilderByDiagnostic) {
                                                       annotateDiagnostic(element, holder, it, annotationBuilderByDiagnostic, true)
                                                   }
-                                              })
-        if (analysisResult.isError()) {
-            throw ProcessCanceledException(analysisResult.error)
-        }
-
+                                              }).also { it.throwIfError() }
         // resolve is done!
 
         val bindingContext = analysisResult.bindingContext

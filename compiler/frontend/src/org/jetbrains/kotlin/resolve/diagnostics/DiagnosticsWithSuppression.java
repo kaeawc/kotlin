@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FilteringIterator;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.kotlin.diagnostics.Diagnostic;
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink;
@@ -76,7 +75,7 @@ public class DiagnosticsWithSuppression implements Diagnostics {
     }
 
     @Override
-    public void setCallback(@Nullable DiagnosticSink.DiagnosticsCallback callback) {
+    public void setCallback(@NotNull DiagnosticSink.DiagnosticsCallback callback) {
 
     }
 

@@ -159,7 +159,7 @@ open class DelegatingBindingTrace(
 
     protected var diagnosticsCallback: DiagnosticSink.DiagnosticsCallback? = null
 
-    override fun setCallback(callback: DiagnosticSink.DiagnosticsCallback?) {
+    override fun setCallback(callback: DiagnosticSink.DiagnosticsCallback) {
         diagnosticsCallback = callback
         mutableDiagnostics?.setCallback(callback)
     }

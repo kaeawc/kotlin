@@ -20,7 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages;
-import org.jetbrains.kotlin.resolve.BindingContext;
 
 import java.util.List;
 
@@ -59,8 +58,8 @@ public interface DiagnosticSink {
     }
 
     void report(@NotNull Diagnostic diagnostic);
-    default void setCallback(DiagnosticsCallback callback) {
-    }
+
+    default void setCallback(@NotNull DiagnosticsCallback callback) { }
 
     boolean wantsDiagnostics();
 }

@@ -45,7 +45,8 @@ class MutableDiagnosticsWithSuppression(
     override fun forElement(psiElement: PsiElement) = readonlyView().forElement(psiElement)
     override fun noSuppression() = readonlyView().noSuppression()
 
-    override fun setCallback(callback: DiagnosticSink.DiagnosticsCallback?) {
+    override fun setCallback(callback: DiagnosticSink.DiagnosticsCallback) {
+        assert(diagnosticsCallback == null) { "diagnostic callback has been already registered" }
         diagnosticsCallback = callback
         delegateDiagnostics.setCallback(callback)
     }
