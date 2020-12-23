@@ -25,10 +25,7 @@ import java.io.File;
 
 import static org.jetbrains.kotlin.resolve.lazy.ResolveSession.areDescriptorsCreatedForDeclaration;
 
-/**
- * Tribute to KotlinPsiChecker formal name of [KotlinHighlightingPass]
- */
-public abstract class AbstractPsiCheckerTest extends KotlinLightCodeInsightFixtureTestCase {
+public abstract class AbstractKotlinHighlightingPassTest extends KotlinLightCodeInsightFixtureTestCase {
     public void doTest(@NotNull VirtualFile file) throws Exception {
         myFixture.configureFromExistingVirtualFile(file);
         checkHighlighting(true, false, false);
