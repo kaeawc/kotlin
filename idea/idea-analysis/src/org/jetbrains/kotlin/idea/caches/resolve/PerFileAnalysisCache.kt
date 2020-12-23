@@ -94,16 +94,23 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
 
         val analyzableParent = KotlinResolveDataProvider.findAnalyzableParent(element) ?: return AnalysisResult.EMPTY
 
+        fun handleResult(result: AnalysisResult, callback: ((Diagnostic) -> Unit)?): AnalysisResult {
+            callback?.let { result.bindingContext.diagnostics.forEach(it::invoke) }
+            return result
+        }
+
         return guardLock.guarded {
             // step 1: perform incremental analysis IF it is applicable
-            getIncrementalAnalysisResult(callback)?.let { return@guarded it }
+            getIncrementalAnalysisResult(callback)?.let {
+                return@guarded handleResult(it, callback)
+            }
 
             // cache does not contain AnalysisResult per each kt/psi element
             // instead it looks up analysis for its parents - see lookUp(analyzableElement)
 
             // step 2: return result if it is cached
             lookUp(analyzableParent)?.let {
-                return@guarded it
+                return@guarded handleResult(it, callback)
             }
 
             // step 3: perform analyze of analyzableParent as nothing has been cached yet

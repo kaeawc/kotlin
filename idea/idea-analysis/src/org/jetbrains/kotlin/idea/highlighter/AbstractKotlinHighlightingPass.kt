@@ -71,16 +71,9 @@ abstract class AbstractKotlinHighlightingPass(file: KtFile, document: Document) 
         val diagnostics = bindingContext.diagnostics.filter { it.psiElement in elements }.toSet()
 
         if (diagnostics.isNotEmpty()) {
-            // this could happen when resolve has not been run (a cached result is used)
-            if (annotationBuilderByDiagnostic.isEmpty()) {
-                diagnostics.groupBy(Diagnostic::psiElement).forEach {
-                    annotateDiagnostics(it.key, holder, it.value, annotationBuilderByDiagnostic)
-                }
-            } else {
-                // annotate diagnostics when analysis is ready
-                diagnostics.filter { it !in annotationBuilderByDiagnostic }.forEach {
-                    annotateDiagnostic(it.psiElement, holder, it, annotationBuilderByDiagnostic)
-                }
+            // annotate diagnostics when analysis is ready
+            diagnostics.filter { it !in annotationBuilderByDiagnostic }.forEach {
+                annotateDiagnostic(it.psiElement, holder, it, annotationBuilderByDiagnostic)
             }
 
             // apply quick fixes for all diagnostics grouping by element
