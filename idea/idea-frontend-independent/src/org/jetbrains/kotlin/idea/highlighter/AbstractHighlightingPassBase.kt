@@ -12,7 +12,6 @@ import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
-import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
@@ -26,16 +25,12 @@ import org.jetbrains.kotlin.psi.KtFile
 @Suppress("UnstableApiUsage")
 abstract class AbstractHighlightingPassBase(
     protected val file: KtFile,
-    document: Document,
-    private val enableAnalyze: Boolean = true
+    document: Document
 ) : TextEditorHighlightingPass(file.project, document), DumbAware {
 
     private val highlightInfos: MutableList<HighlightInfo> = mutableListOf()
-    private val cachedAnnotator by lazy { annotator }
-
     protected var annotationCallback: ((Annotation) -> Unit)? = null
     protected var annotationHolder: AnnotationHolderImpl? = null
-    protected abstract val annotator: Annotator
 
     fun annotationCallback(callback: (Annotation) -> Unit) {
         annotationCallback = callback
@@ -70,12 +65,7 @@ abstract class AbstractHighlightingPassBase(
         element: PsiElement,
         holder: AnnotationHolder
     ) {
-        element.accept(object : PsiRecursiveElementVisitor() {
-            override fun visitElement(element: PsiElement) {
-                cachedAnnotator.annotate(element, holder)
-                super.visitElement(element)
-            }
-        })
+        element.accept(object : PsiRecursiveElementVisitor() {})
     }
 
     override fun getInfos(): MutableList<HighlightInfo> = highlightInfos

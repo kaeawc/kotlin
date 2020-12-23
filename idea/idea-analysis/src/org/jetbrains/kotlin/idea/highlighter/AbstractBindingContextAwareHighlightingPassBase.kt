@@ -6,8 +6,10 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -17,6 +19,10 @@ abstract class AbstractBindingContextAwareHighlightingPassBase(
     file: KtFile,
     document: Document
 ) : AbstractHighlightingPassBase(file, document) {
+
+    private val cachedAnnotator by lazy { annotator }
+
+    protected abstract val annotator: Annotator
 
     private var bindingContext: BindingContext? = null
 
@@ -28,7 +34,12 @@ abstract class AbstractBindingContextAwareHighlightingPassBase(
     override fun runAnnotatorWithContext(element: PsiElement, holder: AnnotationHolder) {
         bindingContext = buildBindingContext(holder)
         try {
-            super.runAnnotatorWithContext(element, holder)
+            element.accept(object : PsiRecursiveElementVisitor() {
+                override fun visitElement(element: PsiElement) {
+                    cachedAnnotator.annotate(element, holder)
+                    super.visitElement(element)
+                }
+            })
         } finally {
             bindingContext = null
         }

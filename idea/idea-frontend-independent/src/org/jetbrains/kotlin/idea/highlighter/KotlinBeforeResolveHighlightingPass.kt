@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeHighlighting.*
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -31,9 +30,6 @@ class KotlinBeforeResolveHighlightingPass(file: KtFile, document: Document) : Ab
             }
         })
     }
-
-    override val annotator: Annotator
-        get() = throw UnsupportedOperationException()
 
     class Factory : TextEditorHighlightingPassFactory {
         override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
