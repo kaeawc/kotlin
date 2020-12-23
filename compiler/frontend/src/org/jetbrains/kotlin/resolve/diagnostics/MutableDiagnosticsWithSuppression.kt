@@ -46,8 +46,14 @@ class MutableDiagnosticsWithSuppression(
     override fun noSuppression() = readonlyView().noSuppression()
 
     override fun setCallback(callback: DiagnosticSink.DiagnosticsCallback) {
+        assert(diagnosticsCallback == null) { "diagnostic callback has been already registered" }
         diagnosticsCallback = callback
         delegateDiagnostics.setCallback(callback)
+    }
+
+    override fun resetCallback() {
+        diagnosticsCallback = null
+        delegateDiagnostics.resetCallback()
     }
 
     //essential that this list is readonly

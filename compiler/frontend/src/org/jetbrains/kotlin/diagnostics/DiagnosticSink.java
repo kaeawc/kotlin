@@ -61,5 +61,7 @@ public interface DiagnosticSink {
 
     default void setCallback(@NotNull DiagnosticsCallback callback) { }
 
+    default void resetCallback() { }
+
     boolean wantsDiagnostics();
 }

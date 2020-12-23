@@ -39,6 +39,7 @@ interface Diagnostics : GenericDiagnostics<Diagnostic> {
     fun noSuppression(): Diagnostics
 
     fun setCallback(callback: DiagnosticsCallback) {}
+    fun resetCallback() {}
 
     companion object {
         val EMPTY: Diagnostics = object : Diagnostics {

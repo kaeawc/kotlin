@@ -436,36 +436,40 @@ private object KotlinResolveDataProvider {
                 allowSliceRewrite = true
             )
 
-            callback?.let { trace.setCallback(it) }
-
             val moduleInfo = analyzableElement.containingKtFile.getModuleInfo()
 
             val targetPlatform = moduleInfo.platform
 
-            /*
-            Note that currently we *have* to re-create LazyTopDownAnalyzer with custom trace in order to disallow resolution of
-            bodies in top-level trace (trace from DI-container).
-            Resolving bodies in top-level trace may lead to memory leaks and incorrect resolution, because top-level
-            trace isn't invalidated on in-block modifications (while body resolution surely does)
+            callback?.let { trace.setCallback(it) }
 
-            Also note that for function bodies, we'll create DelegatingBindingTrace in ResolveElementCache anyways
-            (see 'functionAdditionalResolve'). However, this trace is still needed, because we have other
-            codepaths for other KtDeclarationWithBodies (like property accessors/secondary constructors/class initializers)
-             */
-            val lazyTopDownAnalyzer = createContainerForLazyBodyResolve(
-                //TODO: should get ModuleContext
-                globalContext.withProject(project).withModule(moduleDescriptor),
-                resolveSession,
-                trace,
-                targetPlatform,
-                bodyResolveCache,
-                targetPlatform.findAnalyzerServices(project),
-                analyzableElement.languageVersionSettings,
-                IdeaModuleStructureOracle(),
-                IdeMainFunctionDetectorFactory()
-            ).get<LazyTopDownAnalyzer>()
+            try {
+                /*
+                Note that currently we *have* to re-create LazyTopDownAnalyzer with custom trace in order to disallow resolution of
+                bodies in top-level trace (trace from DI-container).
+                Resolving bodies in top-level trace may lead to memory leaks and incorrect resolution, because top-level
+                trace isn't invalidated on in-block modifications (while body resolution surely does)
 
-            lazyTopDownAnalyzer.analyzeDeclarations(TopDownAnalysisMode.TopLevelDeclarations, listOf(analyzableElement))
+                Also note that for function bodies, we'll create DelegatingBindingTrace in ResolveElementCache anyways
+                (see 'functionAdditionalResolve'). However, this trace is still needed, because we have other
+                codepaths for other KtDeclarationWithBodies (like property accessors/secondary constructors/class initializers)
+                 */
+                val lazyTopDownAnalyzer = createContainerForLazyBodyResolve(
+                    //TODO: should get ModuleContext
+                    globalContext.withProject(project).withModule(moduleDescriptor),
+                    resolveSession,
+                    trace,
+                    targetPlatform,
+                    bodyResolveCache,
+                    targetPlatform.findAnalyzerServices(project),
+                    analyzableElement.languageVersionSettings,
+                    IdeaModuleStructureOracle(),
+                    IdeMainFunctionDetectorFactory()
+                ).get<LazyTopDownAnalyzer>()
+
+                lazyTopDownAnalyzer.analyzeDeclarations(TopDownAnalysisMode.TopLevelDeclarations, listOf(analyzableElement))
+            } finally {
+                trace.resetCallback()
+            }
 
             return AnalysisResult.success(trace.bindingContext, moduleDescriptor)
         } catch (e: ProcessCanceledException) {

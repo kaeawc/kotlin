@@ -79,6 +79,11 @@ public class DiagnosticsWithSuppression implements Diagnostics {
 
     }
 
+    @Override
+    public void resetCallback() {
+
+    }
+
     @TestOnly
     @NotNull
     public Collection<Diagnostic> getDiagnostics() {

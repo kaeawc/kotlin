@@ -164,6 +164,11 @@ open class DelegatingBindingTrace(
         mutableDiagnostics?.setCallback(callback)
     }
 
+    override fun resetCallback() {
+        diagnosticsCallback = null
+        mutableDiagnostics?.resetCallback()
+    }
+
     override fun wantsDiagnostics(): Boolean = mutableDiagnostics != null
 
     override fun toString(): String = name
