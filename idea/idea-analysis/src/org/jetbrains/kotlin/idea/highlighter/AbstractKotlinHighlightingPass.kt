@@ -60,7 +60,7 @@ abstract class AbstractKotlinHighlightingPass(file: KtFile, document: Document) 
             file.analyzeWithAllCompilerChecks({
                                                   val element = it.psiElement
                                                   if (element in elements && it !in annotationBuilderByDiagnostic) {
-                                                      annotateDiagnostic(element, holder, it, annotationBuilderByDiagnostic, true)
+                                                      annotateDiagnostic(element, holder, it, annotationBuilderByDiagnostic)
                                                   }
                                               }).also { it.throwIfError() }
         // resolve is done!
@@ -71,11 +71,6 @@ abstract class AbstractKotlinHighlightingPass(file: KtFile, document: Document) 
         val diagnostics = bindingContext.diagnostics.filter { it.psiElement in elements }.toSet()
 
         if (diagnostics.isNotEmpty()) {
-            // annotate diagnostics when analysis is ready
-            diagnostics.filter { it !in annotationBuilderByDiagnostic }.forEach {
-                annotateDiagnostic(it.psiElement, holder, it, annotationBuilderByDiagnostic)
-            }
-
             // apply quick fixes for all diagnostics grouping by element
             diagnostics.groupBy(Diagnostic::psiElement).forEach {
                 annotateQuickFixes(it.key, it.value, annotationBuilderByDiagnostic)
@@ -89,8 +84,7 @@ abstract class AbstractKotlinHighlightingPass(file: KtFile, document: Document) 
         holder: AnnotationHolder,
         diagnostic: Diagnostic,
         annotationBuilderByDiagnostic: MutableMap<Diagnostic, AnnotationBuilder>? = null,
-        noFixes: Boolean = false
-    ) = annotateDiagnostics(element, holder, listOf(diagnostic), annotationBuilderByDiagnostic, noFixes)
+    ) = annotateDiagnostics(element, holder, listOf(diagnostic), annotationBuilderByDiagnostic, true)
 
     private fun annotateDiagnostics(
         element: PsiElement,
