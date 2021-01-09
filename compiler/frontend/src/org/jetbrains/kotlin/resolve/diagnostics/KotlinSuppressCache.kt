@@ -24,13 +24,11 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.psi.KtAnnotated
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtStubbedPsiUtil
-import org.jetbrains.kotlin.psi.doNotAnalyze
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.constants.ArrayValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
+import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.ExtensionProvider
 
 interface DiagnosticSuppressor {
@@ -75,7 +73,9 @@ abstract class KotlinSuppressCache {
 
         val annotated = KtStubbedPsiUtil.getPsiOrStubParent(element, KtAnnotated::class.java, false) ?: return false
 
-        return isSuppressedByAnnotated(request.suppressKey, request.severity, annotated, 0)
+        val annotationEntryToBeIgnored = KtStubbedPsiUtil.getPsiOrStubParent(element, KtAnnotationEntry::class.java, false)
+
+        return isSuppressedByAnnotated(request.suppressKey, request.severity, annotated, annotationEntryToBeIgnored, 0)
     }
 
     protected open fun isSuppressedByExtension(suppressor: DiagnosticSuppressor, diagnostic: Diagnostic): Boolean {
@@ -111,13 +111,19 @@ abstract class KotlinSuppressCache {
 
        This way we need no more lookups than the number of suppress() annotations from here to the root.
      */
-    private fun isSuppressedByAnnotated(suppressionKey: String, severity: Severity, annotated: KtAnnotated, debugDepth: Int): Boolean {
-        val suppressor = getOrCreateSuppressor(annotated)
+    private fun isSuppressedByAnnotated(
+        suppressionKey: String,
+        severity: Severity,
+        annotated: KtAnnotated,
+        annotationEntryToBeIgnored: KtAnnotationEntry?,
+        debugDepth: Int
+    ): Boolean {
+        val suppressor = getOrCreateSuppressor(annotated, annotationEntryToBeIgnored)
         if (suppressor.isSuppressed(suppressionKey, severity)) return true
 
         val annotatedAbove = KtStubbedPsiUtil.getPsiOrStubParent(suppressor.annotatedElement, KtAnnotated::class.java, true) ?: return false
 
-        val suppressed = isSuppressedByAnnotated(suppressionKey, severity, annotatedAbove, debugDepth + 1)
+        val suppressed = isSuppressedByAnnotated(suppressionKey, severity, annotatedAbove, annotationEntryToBeIgnored, debugDepth + 1)
         val suppressorAbove = suppressors[annotatedAbove]
         if (suppressorAbove != null && suppressorAbove.dominates(suppressor)) {
             suppressors[annotated] = suppressorAbove
@@ -126,9 +132,9 @@ abstract class KotlinSuppressCache {
         return suppressed
     }
 
-    private fun getOrCreateSuppressor(annotated: KtAnnotated): Suppressor =
+    private fun getOrCreateSuppressor(annotated: KtAnnotated, annotationEntryToBeIgnored: KtAnnotationEntry?): Suppressor =
         suppressors.getOrPut(annotated) {
-            val strings = getSuppressingStrings(annotated)
+            val strings = getSuppressingStrings(annotated, annotationEntryToBeIgnored)
             when (strings.size) {
                 0 -> EmptySuppressor(annotated)
                 1 -> SingularSuppressor(annotated, strings.first())
@@ -138,10 +144,13 @@ abstract class KotlinSuppressCache {
 
     abstract fun getSuppressionAnnotations(annotated: KtAnnotated): List<AnnotationDescriptor>
 
-    private fun getSuppressingStrings(annotated: KtAnnotated): Set<String> {
+    private fun getSuppressingStrings(annotated: KtAnnotated, annotationEntryToBeIgnored: KtAnnotationEntry?): Set<String> {
         val builder = ImmutableSet.builder<String>()
         for (annotationDescriptor in getSuppressionAnnotations(annotated)) {
-            processAnnotation(builder, annotationDescriptor)
+            val psi = annotationDescriptor.source.getPsi()
+            if (psi != annotationEntryToBeIgnored) {
+                processAnnotation(builder, annotationDescriptor)
+            }
         }
 
         return builder.build()

@@ -23,6 +23,7 @@ import com.intellij.util.CachedValueImpl
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink
+import org.jetbrains.kotlin.diagnostics.Errors
 
 class MutableDiagnosticsWithSuppression(
     private val suppressCache: KotlinSuppressCache,
@@ -62,13 +63,14 @@ class MutableDiagnosticsWithSuppression(
     }
 
     fun report(diagnostic: Diagnostic) {
-        // TODO: [VD] diagnostic has to be reported via callback, but there are several of failures
-        //  unable to render message for some diagnostics :
-        //  e.g.: `Type parameter descriptor is not initialized: T declared in fooParam` (see [PsiCheckerTestGenerated$Checker.testRedeclaration])
-
-//        if (this.suppressCache.filter.invoke(diagnostic)) {
-//             diagnosticsCallback?.callback(diagnostic)
-//        }
+        // TODO: it is known that on diagnostic callback UNRESOLVED_REFERENCE and REDECLARATION could run into a recursion
+        //   so, it is worth to ignore only them from on-fly reporting
+        if (diagnostic.factory != Errors.UNRESOLVED_REFERENCE &&
+            diagnostic.factory != Errors.REDECLARATION &&
+            this.suppressCache.filter.invoke(diagnostic)
+        ) {
+            diagnosticsCallback?.callback(diagnostic)
+        }
 
         diagnosticList.add(diagnostic)
         modificationTracker.incModificationCount()

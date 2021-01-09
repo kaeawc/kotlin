@@ -123,7 +123,9 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
             val result = analyze(analyzableParent, null, localCallback)
 
             // some of diagnostics could be not handled with a callback - send out the rest
-            callback?.let { c -> result.bindingContext.diagnostics.filterNot { it in localDiagnostics }.forEach(c) }
+            callback?.let { c ->
+                result.bindingContext.diagnostics.filterNot { it in localDiagnostics }.forEach(c)
+            }
             cache[analyzableParent] = result
 
             return@guarded result
