@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.before
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.constants.ArrayValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
@@ -73,9 +74,9 @@ abstract class KotlinSuppressCache {
 
         val annotated = KtStubbedPsiUtil.getPsiOrStubParent(element, KtAnnotated::class.java, false) ?: return false
 
-        val annotationEntryToBeIgnored = KtStubbedPsiUtil.getPsiOrStubParent(element, KtAnnotationEntry::class.java, false)
+        val annotationEntryAndAfterToBeIgnored = KtStubbedPsiUtil.getPsiOrStubParent(element, KtAnnotationEntry::class.java, false)
 
-        return isSuppressedByAnnotated(request.suppressKey, request.severity, annotated, annotationEntryToBeIgnored, 0)
+        return isSuppressedByAnnotated(request.suppressKey, request.severity, annotated, annotationEntryAndAfterToBeIgnored, 0)
     }
 
     protected open fun isSuppressedByExtension(suppressor: DiagnosticSuppressor, diagnostic: Diagnostic): Boolean {
@@ -115,15 +116,15 @@ abstract class KotlinSuppressCache {
         suppressionKey: String,
         severity: Severity,
         annotated: KtAnnotated,
-        annotationEntryToBeIgnored: KtAnnotationEntry?,
+        annotationEntryAndAfterToBeIgnored: KtAnnotationEntry?,
         debugDepth: Int
     ): Boolean {
-        val suppressor = getOrCreateSuppressor(annotated, annotationEntryToBeIgnored)
+        val suppressor = getOrCreateSuppressor(annotated, annotationEntryAndAfterToBeIgnored)
         if (suppressor.isSuppressed(suppressionKey, severity)) return true
 
         val annotatedAbove = KtStubbedPsiUtil.getPsiOrStubParent(suppressor.annotatedElement, KtAnnotated::class.java, true) ?: return false
 
-        val suppressed = isSuppressedByAnnotated(suppressionKey, severity, annotatedAbove, annotationEntryToBeIgnored, debugDepth + 1)
+        val suppressed = isSuppressedByAnnotated(suppressionKey, severity, annotatedAbove, annotationEntryAndAfterToBeIgnored, debugDepth + 1)
         val suppressorAbove = suppressors[annotatedAbove]
         if (suppressorAbove != null && suppressorAbove.dominates(suppressor)) {
             suppressors[annotated] = suppressorAbove
@@ -132,9 +133,9 @@ abstract class KotlinSuppressCache {
         return suppressed
     }
 
-    private fun getOrCreateSuppressor(annotated: KtAnnotated, annotationEntryToBeIgnored: KtAnnotationEntry?): Suppressor =
+    private fun getOrCreateSuppressor(annotated: KtAnnotated, annotationEntryAndAfterToBeIgnored: KtAnnotationEntry?): Suppressor =
         suppressors.getOrPut(annotated) {
-            val strings = getSuppressingStrings(annotated, annotationEntryToBeIgnored)
+            val strings = getSuppressingStrings(annotated, annotationEntryAndAfterToBeIgnored)
             when (strings.size) {
                 0 -> EmptySuppressor(annotated)
                 1 -> SingularSuppressor(annotated, strings.first())
@@ -144,11 +145,11 @@ abstract class KotlinSuppressCache {
 
     abstract fun getSuppressionAnnotations(annotated: KtAnnotated): List<AnnotationDescriptor>
 
-    private fun getSuppressingStrings(annotated: KtAnnotated, annotationEntryToBeIgnored: KtAnnotationEntry?): Set<String> {
+    private fun getSuppressingStrings(annotated: KtAnnotated, annotationEntryAndAfterToBeIgnored: KtAnnotationEntry?): Set<String> {
         val builder = ImmutableSet.builder<String>()
         for (annotationDescriptor in getSuppressionAnnotations(annotated)) {
             val psi = annotationDescriptor.source.getPsi()
-            if (psi != annotationEntryToBeIgnored) {
+            if (annotationEntryAndAfterToBeIgnored == null || psi?.before(annotationEntryAndAfterToBeIgnored) != false) {
                 processAnnotation(builder, annotationDescriptor)
             }
         }

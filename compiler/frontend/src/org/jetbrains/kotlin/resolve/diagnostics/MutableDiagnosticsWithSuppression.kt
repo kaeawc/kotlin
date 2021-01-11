@@ -63,12 +63,9 @@ class MutableDiagnosticsWithSuppression(
     }
 
     fun report(diagnostic: Diagnostic) {
-        // TODO: it is known that on diagnostic callback UNRESOLVED_REFERENCE and REDECLARATION could run into a recursion
+        // TODO: it is known that on diagnostic callback REDECLARATION could run into a recursion
         //   so, it is worth to ignore only them from on-fly reporting
-        if (diagnostic.factory != Errors.UNRESOLVED_REFERENCE &&
-            diagnostic.factory != Errors.REDECLARATION &&
-            this.suppressCache.filter.invoke(diagnostic)
-        ) {
+        if (diagnostic.factory != Errors.REDECLARATION && this.suppressCache.filter.invoke(diagnostic)) {
             diagnosticsCallback?.callback(diagnostic)
         }
 
