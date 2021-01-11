@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.context.GlobalContextImpl
 import org.jetbrains.kotlin.context.withProject
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
@@ -149,7 +149,7 @@ internal class ProjectResolutionFacade(
 
     internal fun getAnalysisResultsForElements(
         elements: Collection<KtElement>,
-        callback: ((Diagnostic) -> Unit)? = null
+        callback: DiagnosticSink.DiagnosticsCallback? = null
     ): AnalysisResult {
         assert(elements.isNotEmpty()) { "elements collection should not be empty" }
 
