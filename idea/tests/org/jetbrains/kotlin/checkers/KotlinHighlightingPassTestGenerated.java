@@ -41,6 +41,11 @@ public class KotlinHighlightingPassTestGenerated extends AbstractKotlinHighlight
             runTest("idea/testData/checker/AnnotationOnFile.kt");
         }
 
+        @TestMetadata("AnnotationSupressing.kt")
+        public void testAnnotationSupressing() throws Exception {
+            runTest("idea/testData/checker/AnnotationSupressing.kt");
+        }
+
         @TestMetadata("AnonymousInitializers.kt")
         public void testAnonymousInitializers() throws Exception {
             runTest("idea/testData/checker/AnonymousInitializers.kt");

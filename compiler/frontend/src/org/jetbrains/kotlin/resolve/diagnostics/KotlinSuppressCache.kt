@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.before
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.constants.ArrayValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
@@ -147,11 +146,12 @@ abstract class KotlinSuppressCache {
 
     private fun getSuppressingStrings(annotated: KtAnnotated, annotationEntryAndAfterToBeIgnored: KtAnnotationEntry?): Set<String> {
         val builder = ImmutableSet.builder<String>()
-        for (annotationDescriptor in getSuppressionAnnotations(annotated)) {
+        val suppressionAnnotations = getSuppressionAnnotations(annotated).sortedBy { it.source.getPsi()?.text ?: "" }
+
+        for (annotationDescriptor in suppressionAnnotations) {
             val psi = annotationDescriptor.source.getPsi()
-            if (annotationEntryAndAfterToBeIgnored == null || psi?.before(annotationEntryAndAfterToBeIgnored) != false) {
-                processAnnotation(builder, annotationDescriptor)
-            }
+            if (psi == annotationEntryAndAfterToBeIgnored) break
+            processAnnotation(builder, annotationDescriptor)
         }
 
         return builder.build()
