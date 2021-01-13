@@ -146,9 +146,8 @@ abstract class KotlinSuppressCache {
 
     private fun getSuppressingStrings(annotated: KtAnnotated, annotationEntryAndAfterToBeIgnored: KtAnnotationEntry?): Set<String> {
         val builder = ImmutableSet.builder<String>()
-        val suppressionAnnotations = getSuppressionAnnotations(annotated).sortedBy { it.source.getPsi()?.text ?: "" }
 
-        for (annotationDescriptor in suppressionAnnotations) {
+        for (annotationDescriptor in getSuppressionAnnotations(annotated)) {
             val psi = annotationDescriptor.source.getPsi()
             if (psi == annotationEntryAndAfterToBeIgnored) break
             processAnnotation(builder, annotationDescriptor)
