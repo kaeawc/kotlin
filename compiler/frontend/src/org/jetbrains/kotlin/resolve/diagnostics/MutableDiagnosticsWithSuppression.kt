@@ -63,10 +63,12 @@ class MutableDiagnosticsWithSuppression(
     }
 
     fun report(diagnostic: Diagnostic) {
-        // TODO: it is known that on diagnostic callback REDECLARATION could run into a recursion
-        //   so, it is worth to ignore only them from on-fly reporting
-        if (diagnostic.factory != Errors.REDECLARATION && this.suppressCache.filter.invoke(diagnostic)) {
-            diagnosticsCallback?.callback(diagnostic)
+        diagnosticsCallback?.let { callback ->
+            // TODO: it is known that on diagnostic callback REDECLARATION could run into a recursion
+            //   so, it is worth to ignore only them from on-fly reporting
+            if (diagnostic.factory != Errors.REDECLARATION && this.suppressCache.filter.invoke(diagnostic)) {
+                callback.callback(diagnostic)
+            }
         }
 
         diagnosticList.add(diagnostic)
